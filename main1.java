@@ -1,168 +1,154 @@
-import java.sql.*;
+
 import java.awt.*;
 import java.awt.event.*;
+import java.sql.*;
 import javax.swing.*;
 
-public class main1 {
-
+public class main {
     public static void main(String[] args) {
         try {
             Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/subh", "root", "1234");
-            Statement stmt = conn.createStatement();
 
-            // Create main frame
-            JFrame frame = new JFrame("Employee Management System");
-            frame.setSize(750, 400);
+            // Frame Setup
+            JFrame frame = new JFrame("Hospital Management System");
+            frame.setSize(950, 600);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setLayout(new BorderLayout());
 
-            // ========= LEFT PANEL (Form Panel) =========
+            // Left Panel - Input Form
             JPanel leftPanel = new JPanel();
             leftPanel.setLayout(null);
-            leftPanel.setPreferredSize(new Dimension(350, 400));
-            leftPanel.setBackground(new Color(240, 248, 255));
+            leftPanel.setPreferredSize(new Dimension(450, 600));
+            leftPanel.setBackground(new Color(230, 245, 255));  // light blue tone
 
-            JLabel l1 = new JLabel("Enter ID:");
-            l1.setBounds(30, 30, 100, 25);
+            JLabel titleLabel = new JLabel("Enter Patient & Doctor Details");
+            titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
+            titleLabel.setBounds(60, 20, 300, 30);
+            leftPanel.add(titleLabel);
+
+            JLabel l1 = new JLabel("Patient Name:");
+            l1.setBounds(30, 80, 120, 25);
             JTextField lt1 = new JTextField();
-            lt1.setBounds(150, 30, 150, 25);
+            lt1.setBounds(160, 80, 200, 30);
 
-            JLabel l2 = new JLabel("Enter Name:");
-            l2.setBounds(30, 80, 100, 25);
+            JLabel l2 = new JLabel("Patient Gender:");
+            l2.setBounds(30, 130, 120, 25);
             JTextField lt2 = new JTextField();
-            lt2.setBounds(150, 80, 150, 25);
+            lt2.setBounds(160, 130, 200, 30);
 
-            JLabel l3 = new JLabel("Enter Department:");
-            l3.setBounds(30, 130, 120, 25);
+            JLabel l3 = new JLabel("Doctor Name:");
+            l3.setBounds(30, 180, 120, 25);
             JTextField lt3 = new JTextField();
-            lt3.setBounds(150, 130, 150, 25);
+            lt3.setBounds(160, 180, 200, 30);
 
-            JButton btnInsert = new JButton("Insert");
-            btnInsert.setBounds(100, 190, 120, 30);
-            btnInsert.setBackground(new Color(60, 179, 113));
-            btnInsert.setForeground(Color.WHITE);
+            JLabel l4 = new JLabel("Doctor Specialization:");
+            l4.setBounds(30, 230, 150, 25);
+            JTextField lt4 = new JTextField();
+            lt4.setBounds(160, 230, 200, 30);
 
-            btnInsert.addActionListener(e1 -> {
-                int id = Integer.parseInt(lt1.getText());
-                String name = lt2.getText();
-                String dept = lt3.getText();
+            JLabel l5 = new JLabel("Appointment Date:");
+            l5.setBounds(30, 280, 150, 25);
+            JTextField lt5 = new JTextField("YYYY-MM-DD");
+            lt5.setBounds(160, 280, 200, 30);
+
+            JLabel l6 = new JLabel("Status:");
+            l6.setBounds(30, 330, 120, 25);
+            JTextField lt6 = new JTextField("Scheduled");
+            lt6.setBounds(160, 330, 200, 30);
+
+            JButton btn1 = new JButton("Insert Details");
+            btn1.setBounds(140, 400, 150, 35);
+            btn1.setBackground(new Color(60, 179, 113)); // modern green
+            btn1.setForeground(Color.WHITE);
+            btn1.setFont(new Font("Arial", Font.BOLD, 14));
+
+            leftPanel.add(l1); leftPanel.add(lt1);
+            leftPanel.add(l2); leftPanel.add(lt2);
+            leftPanel.add(l3); leftPanel.add(lt3);
+            leftPanel.add(l4); leftPanel.add(lt4);
+            leftPanel.add(l5); leftPanel.add(lt5);
+            leftPanel.add(l6); leftPanel.add(lt6);
+            leftPanel.add(btn1);
+
+            // btn1 ActionListener
+            btn1.addActionListener(e1 -> {
                 try {
-                    String query = "INSERT INTO EMP VALUES(?,?,?)";
-                    PreparedStatement pmst = conn.prepareStatement(query);
-                    pmst.setInt(1, id);
-                    pmst.setString(2, name);
-                    pmst.setString(3, dept);
-                    pmst.executeUpdate();
+                    String pname = lt1.getText();
+                    String pgender = lt2.getText();
+                    String dname = lt3.getText();
+                    String dspec = lt4.getText();
+                    String appdate = lt5.getText();
+                    String status = lt6.getText();
+
+                    // Insert into doctors
+                    String query1 = "INSERT INTO doctors(name, specialization) VALUES(?, ?)";
+                    PreparedStatement pmst1 = conn.prepareStatement(query1, Statement.RETURN_GENERATED_KEYS);
+                    pmst1.setString(1, dname);
+                    pmst1.setString(2, dspec);
+                    pmst1.executeUpdate();
+                    ResultSet r1 = pmst1.getGeneratedKeys();
+                    int d_id = 0;
+                    if (r1.next()) d_id = r1.getInt(1);
+
+                    // Insert into patients
+                    String query2 = "INSERT INTO patients(name, gender) VALUES(?, ?)";
+                    PreparedStatement pmst2 = conn.prepareStatement(query2, Statement.RETURN_GENERATED_KEYS);
+                    pmst2.setString(1, pname);
+                    pmst2.setString(2, pgender);
+                    pmst2.executeUpdate();
+                    ResultSet r2 = pmst2.getGeneratedKeys();
+                    int p_id = 0;
+                    if (r2.next()) p_id = r2.getInt(1);
+
+                    // Insert into appointments
+                    String query3 = "INSERT INTO appointments(patient_id, doctor_id, appointment_date, status) VALUES(?,?,?,?)";
+                    PreparedStatement pmst3 = conn.prepareStatement(query3);
+                    pmst3.setInt(1, p_id);
+                    pmst3.setInt(2, d_id);
+                    pmst3.setString(3, appdate);
+                    pmst3.setString(4, status);
+                    pmst3.executeUpdate();
+
+                    JOptionPane.showMessageDialog(null, "Inserted Successfully!");
+
+                    // Reset fields
                     lt1.setText("");
                     lt2.setText("");
                     lt3.setText("");
-                } catch (Exception u) {
-                    u.printStackTrace();
+                    lt4.setText("");
+                    lt5.setText("YYYY-MM-DD");
+                    lt6.setText("Scheduled");
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(null, "Error: " + ex.getMessage());
                 }
             });
 
-            leftPanel.add(l1);
-            leftPanel.add(lt1);
-            leftPanel.add(l2);
-            leftPanel.add(lt2);
-            leftPanel.add(l3);
-            leftPanel.add(lt3);
-            leftPanel.add(btnInsert);
-
-            // ========= RIGHT PANEL (Search Panel) =========
+            // Right Panel - Display Area
             JPanel rightPanel = new JPanel();
             rightPanel.setLayout(null);
-            rightPanel.setBackground(new Color(255, 250, 250));
+            rightPanel.setBackground(new Color(245, 245, 245));  // subtle light gray
 
-            JLabel searchTitle = new JLabel("Search Employee by ID");
-            searchTitle.setFont(new Font("Arial", Font.BOLD, 16));
-            searchTitle.setBounds(40, 30, 250, 25);
-            rightPanel.add(searchTitle);
+            JLabel displayLabel = new JLabel("Appointment Display Area");
+            displayLabel.setFont(new Font("Arial", Font.BOLD, 18));
+            displayLabel.setBounds(50, 30, 300, 30);
+            rightPanel.add(displayLabel);
 
-            JButton btn3 = new JButton("Search All");
-            btn3.setBackground(new Color(70, 130, 180));
-            btn3.setForeground(Color.WHITE);
-            btn3.setBounds(250, 30, 100, 25);
-            rightPanel.add(btn3);
+            JTextArea displayArea = new JTextArea("Appointment details will appear here...");
+            displayArea.setEditable(false);
+            displayArea.setLineWrap(true);
+            displayArea.setWrapStyleWord(true);
+            displayArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
 
-            JLabel r1 = new JLabel("Employee ID:");
-            r1.setBounds(30, 80, 100, 25);
-            JTextField rt1 = new JTextField();
-            rt1.setBounds(130, 80, 120, 25);
-            rightPanel.add(r1);
-            rightPanel.add(rt1);
-
-            JButton btnSearch = new JButton("Search");
-            btnSearch.setBounds(260, 80, 80, 25);
-            btnSearch.setBackground(new Color(70, 130, 180));
-            btnSearch.setForeground(Color.WHITE);
-            rightPanel.add(btnSearch);
-
-            JTextArea outputArea = new JTextArea("Result will appear here");
-            outputArea.setFont(new Font("Arial", Font.PLAIN, 13));
-            outputArea.setEditable(false);
-            outputArea.setLineWrap(true);
-            outputArea.setWrapStyleWord(true);
-
-            JScrollPane scrollPane = new JScrollPane(outputArea);
-            scrollPane.setBounds(20, 130, 320, 200);
+            JScrollPane scrollPane = new JScrollPane(displayArea);
+            scrollPane.setBounds(50, 80, 400, 400);
             scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
             rightPanel.add(scrollPane);
 
-            // ========= Button Logic =========
-            btn3.addActionListener(e3 -> {
-                try {
-                    ResultSet rs = stmt.executeQuery("SELECT * FROM emp");
-                    StringBuilder results = new StringBuilder();
-
-                    boolean found = false;
-                    while (rs.next()) {
-                        found = true;
-                        results.append("ID: ").append(rs.getInt(1))
-                               .append(", Name: ").append(rs.getString(2))
-                               .append(", Dept: ").append(rs.getString(3))
-                               .append("\n");
-                    }
-
-                    if (!found) {
-                        outputArea.setText("Empty Table");
-                    } else {
-                        outputArea.setText(results.toString());
-                    }
-
-                } catch (Exception e4) {
-                    e4.printStackTrace();
-                }
-            });
-
-            btnSearch.addActionListener(e2 -> {
-                int id = Integer.parseInt(rt1.getText());
-                boolean f = false;
-
-                try {
-                    String query = "SELECT * FROM emp WHERE empid = ?";
-                    PreparedStatement psmt = conn.prepareStatement(query);
-                    psmt.setInt(1, id);
-                    ResultSet rs = psmt.executeQuery();
-                    rt1.setText("");
-
-                    while (rs.next()) {
-                        f = true;
-                        String statement = "ID: " + rs.getInt(1) + ", Name: " + rs.getString(2) + ", Dept: " + rs.getString(3);
-                        outputArea.setText(statement);
-                    }
-                    if (!f) {
-                        outputArea.setText("Employee does not exist.");
-                    }
-
-                } catch (Exception r) {
-                    r.printStackTrace();
-                }
-            });
-
-            // ========= SPLIT PANE =========
+            // Split Pane
             JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel);
-            splitPane.setDividerLocation(350);
+            splitPane.setDividerLocation(450);
             splitPane.setEnabled(false);
 
             frame.add(splitPane, BorderLayout.CENTER);
